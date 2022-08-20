@@ -5,10 +5,12 @@ import {
   NativeBaseProvider,
   VStack,
   Box,
-  Pressable,
+  Button,
 } from 'native-base';
 
 import {isEmpty, isNull} from 'lodash';
+import GlobalContext from './src/context';
+import Display from './src/Display';
 
 const OPERATIONS = ['/', '*', '-', '+'];
 
@@ -20,9 +22,9 @@ interface ITEM {
 }
 
 interface INITIAL_EQUATION {
-  firstNumber: number | null;
+  firstNumber: any;
   operation: string;
-  secondNumber: number | null;
+  secondNumber: any;
   lastOperation: string;
 }
 
@@ -41,7 +43,7 @@ const App = () => {
           label: 'AC',
           bgColor: '#c7c6cb',
           labelColor: 'black',
-          handlePress: () => handleUtilityPress('AC'),
+          handlePress: () => handlePressClear(),
         },
         {
           label: '±',
@@ -173,17 +175,26 @@ const App = () => {
   const [display, setDisplay] = useState(0);
   const [history, setHistory] = useState<null | number>(null);
   const [equation, setEquation] = useState(INITIAL_EQUATION);
+  const [isClear, setIsClear] = useState(false);
 
   useEffect(() => {
     console.log('values', equation, history, display);
   }, [equation, history, display]);
 
-  const handleUtilityPress = (type: string) => {
-    if (type === 'AC') {
+  useEffect(() => {
+    if (isClear) {
       setEquation(INITIAL_EQUATION);
       setHistory(null);
       setDisplay(0);
-    } else if (type === '±') {
+    }
+  }, [isClear]);
+
+  const handlePressClear = () => {
+    setIsClear(true);
+  };
+
+  const handleUtilityPress = (type: string) => {
+    if (type === '±') {
       if (isEmpty(equation.operation)) {
         const value =
           equation.firstNumber < 0
@@ -227,37 +238,40 @@ const App = () => {
         ? equation.firstNumber.toString().split('.').join('').length
         : equation.secondNumber.toString().split('.').join('').length;
 
+      console.log('dsds', val);
+
       if (val % 1 === 0) {
         if (isEmpty(equation.operation)) {
           setEquation({
             ...equation,
-            firstNumber: val.toFixed(2),
+            firstNumber: val,
           });
         } else {
           setEquation({
             ...equation,
-            secondNumber: val.toFixed(2),
+            secondNumber: val,
           });
         }
-        setDisplay(val.toFixed(2));
+        setDisplay(val);
       } else {
         if (isEmpty(equation.operation)) {
           setEquation({
             ...equation,
-            firstNumber: val.toFixed(inputLength),
+            firstNumber: val,
           });
         } else {
           setEquation({
             ...equation,
-            secondNumber: val.toFixed(inputLength),
+            secondNumber: val,
           });
         }
-        setDisplay(val.toFixed(inputLength));
+        setDisplay(val);
       }
     }
   };
 
   const handleDigitPress = (number: number) => {
+    setIsClear(false);
     if (isEmpty(equation.operation)) {
       const firstNumber = isNull(equation.firstNumber)
         ? number
@@ -333,7 +347,7 @@ const App = () => {
   };
 
   const renderButton = (item: ITEM, index: number) => (
-    <Pressable
+    <Button
       key={index}
       onPress={item.handlePress}
       flex={item.label === '0' ? 0 : 1}
@@ -346,30 +360,36 @@ const App = () => {
       <Text fontSize="lg" fontWeight="bold" color={item.labelColor}>
         {item.label}
       </Text>
-    </Pressable>
+    </Button>
   );
 
+  // context
+  const initialContext = {
+    display,
+    setDisplay,
+  };
+
   return (
-    <NativeBaseProvider>
-      <Box
-        height="20%"
-        bg="black"
-        alignItems="flex-end"
-        justifyContent="flex-end">
-        <Text color="white" fontSize="4xl" marginBottom={5} marginRight={5}>
-          {display}
-        </Text>
-      </Box>
-      <Box flex={1}>
-        <VStack flex={1}>
-          {BUTTONS.map((button, index) => (
-            <HStack key={index} flex={1}>
-              {button.items.map(renderButton)}
-            </HStack>
-          ))}
-        </VStack>
-      </Box>
-    </NativeBaseProvider>
+    <GlobalContext.Provider value={initialContext}>
+      <NativeBaseProvider>
+        <Box
+          height="20%"
+          bg="black"
+          alignItems="flex-end"
+          justifyContent="flex-end">
+          <Display />
+        </Box>
+        <Box flex={1} bg="black">
+          <VStack flex={1}>
+            {BUTTONS.map((button, index) => (
+              <HStack key={index} flex={1}>
+                {button.items.map(renderButton)}
+              </HStack>
+            ))}
+          </VStack>
+        </Box>
+      </NativeBaseProvider>
+    </GlobalContext.Provider>
   );
 };
 
