@@ -1,32 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {
-  Text,
-  HStack,
-  NativeBaseProvider,
-  VStack,
-  Box,
-  Button,
-} from 'native-base';
+import React, {memo, useContext, useEffect, useState} from 'react';
+import {Button, Text, VStack, HStack} from 'native-base';
 
 import {isEmpty, isNull} from 'lodash';
-import GlobalContext from './src/context';
-import Display from './src/Display';
-
-const OPERATIONS = ['/', '*', '-', '+'];
-
-interface ITEM {
-  label: string;
-  bgColor: string;
-  labelColor: string;
-  handlePress: () => void;
-}
-
-interface INITIAL_EQUATION {
-  firstNumber: any;
-  operation: string;
-  secondNumber: any;
-  lastOperation: string;
-}
+import GlobalContext from './context';
 
 const INITIAL_EQUATION: INITIAL_EQUATION = {
   firstNumber: null,
@@ -35,151 +11,17 @@ const INITIAL_EQUATION: INITIAL_EQUATION = {
   lastOperation: '',
 };
 
-const App = () => {
-  const BUTTONS = [
-    {
-      items: [
-        {
-          label: 'AC',
-          bgColor: '#c7c6cb',
-          labelColor: 'black',
-          handlePress: () => handlePressClear(),
-        },
-        {
-          label: '±',
-          bgColor: '#c7c6cb',
-          labelColor: 'black',
-          handlePress: () => handleUtilityPress('±'),
-        },
-        {
-          label: '%',
-          bgColor: '#c7c6cb',
-          labelColor: 'black',
-          handlePress: () => handleUtilityPress('%'),
-        },
-        {
-          label: '÷',
-          bgColor: '#fb9a17',
-          labelColor: 'white',
-          handlePress: () => handleOperationPress('/'),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: '7',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(7),
-        },
-        {
-          label: '8',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(8),
-        },
-        {
-          label: '9',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(9),
-        },
-        {
-          label: 'x',
-          bgColor: '#fb9a17',
-          labelColor: 'white',
-          handlePress: () => handleOperationPress('*'),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: '4',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(4),
-        },
-        {
-          label: '5',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(5),
-        },
-        {
-          label: '6',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(6),
-        },
-        {
-          label: '-',
-          bgColor: '#fb9a17',
-          labelColor: 'white',
-          handlePress: () => handleOperationPress('-'),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: '1',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(1),
-        },
-        {
-          label: '2',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(2),
-        },
-        {
-          label: '3',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(3),
-        },
-        {
-          label: '+',
-          bgColor: '#fb9a17',
-          labelColor: 'white',
-          handlePress: () => handleOperationPress('+'),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: '0',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleDigitPress(0),
-        },
-        {
-          label: '.',
-          bgColor: '#e0e0e6',
-          labelColor: 'black',
-          handlePress: () => handleUtilityPress('.'),
-        },
-        {
-          label: '=',
-          bgColor: '#fb9a17',
-          labelColor: 'white',
-          handlePress: () => handleEqualPress(),
-        },
-      ],
-    },
-  ];
-  const [display, setDisplay] = useState(0);
+const CButton = ({getButtons}) => {
+  const {display, setDisplay} = useContext(GlobalContext);
+  const [buttons, setButtons] = useState([]);
   const [history, setHistory] = useState<null | number>(null);
   const [equation, setEquation] = useState(INITIAL_EQUATION);
   const [isClear, setIsClear] = useState(false);
+  console.log('render button');
 
   useEffect(() => {
-    console.log('values', equation, history, display);
-  }, [equation, history, display]);
+    setButtons(getButtons());
+  }, [getButtons]);
 
   useEffect(() => {
     if (isClear) {
@@ -190,24 +32,9 @@ const App = () => {
   }, [isClear]);
 
   const handlePressClear = () => {
-    //setIsClear(true);
-    console.log(find_max([1, 2, 34]));
+    setIsClear(true);
+    setIsRefresh(true);
   };
-
-  function find_max(nums) {
-    let max_num = Number.NEGATIVE_INFINITY; // smaller than all other numbers
-    for (let num of nums) {
-      console.log(num, max_num, num > max_num);
-      if (num > max_num) {
-        //num = max_num;
-        //max_num += 1;
-        max_num = num;
-        //max_num += num;
-        // (Fill in the missing line here)
-      }
-    }
-    return max_num;
-  }
 
   const handleUtilityPress = (type: string) => {
     if (type === '±') {
@@ -362,10 +189,15 @@ const App = () => {
     });
   };
 
+  const handleButtonPress = value => {
+    handleDigitPress(parseFloat(value));
+    console.log(parseFloat(value));
+  };
+
   const renderButton = (item: ITEM, index: number) => (
     <Button
       key={index}
-      onPress={item.handlePress}
+      onPress={() => handleButtonPress(item.label)}
       flex={item.label === '0' ? 0 : 1}
       w={item.label === '0' ? '50%' : 0}
       borderBottomWidth={1}
@@ -379,34 +211,16 @@ const App = () => {
     </Button>
   );
 
-  // context
-  const initialContext = {
-    display,
-    setDisplay,
-  };
-
   return (
-    <GlobalContext.Provider value={initialContext}>
-      <NativeBaseProvider>
-        <Box
-          height="20%"
-          bg="black"
-          alignItems="flex-end"
-          justifyContent="flex-end">
-          <Display />
-        </Box>
-        <Box flex={1} bg="black">
-          <VStack flex={1}>
-            {BUTTONS.map((button, index) => (
-              <HStack key={index} flex={1}>
-                {button.items.map(renderButton)}
-              </HStack>
-            ))}
-          </VStack>
-        </Box>
-      </NativeBaseProvider>
-    </GlobalContext.Provider>
+    <VStack flex={1}>
+      {buttons.length > 0 &&
+        buttons.map((button, index) => (
+          <HStack key={index} flex={1}>
+            {button.items.map(renderButton)}
+          </HStack>
+        ))}
+    </VStack>
   );
 };
 
-export default App;
+export default memo(CButton);
